@@ -1,0 +1,1040 @@
+openapi: 3.0.1
+info:
+  title: Tic:Toc Calculator API
+  x-logo:
+    url: "https://tictoc.ai/img/tictoc_ent_logo.svg"
+    backgroundColor: "#000747"
+    altText: "tic:toc Enterprise logo"
+  description:   >-
+
+    [Tic:Toc Enterprise](https://tictoc.ai) provides our platform partners with an easy way to support calculators embedded in your customer experience with reliable and accurate Calculator API endpoints.
+    
+
+    ## Getting Started  
+    
+    Integrating with Calculator API is easy. You'll need the following:
+      - your test API client credentials. These will be provided to you by Tic:Toc, and must be stored securely, 
+      - start developing using our test environment. This will allow you to get familiar with the request and response models through this documentation or embedded in your own customer experiences, 
+      - your production API client credentials. These will be provided to you by Tic:Toc, and must be stored securely,
+      - go live! Start getting the insights you need when you need them.
+      
+    
+    ## The API Orchestration
+    
+    To get your data there are two API calls you need to make:
+      - first you must get a `/token` to allow all calls to be authenticated,
+      - secondly call the relevant Calculator endpoint based on your use case, with the relevant request parameters. All calls must include a token and the `x-api-key` header.
+
+      
+
+  contact:
+    name: Tic:Toc Enterprise
+    url: https://tictoc.ai/
+    email: enterprise@tictoc.ai
+  version: 1.0.0
+servers:
+- url: https://api.stage.tictoc.ai/public/v1.0/calculator/
+  description: Test server
+- url: https://api.tictoc.ai/public/v1.0/calculator/
+  description: Production server
+paths:
+  /token:
+    post:
+      tags:
+      - Authentication
+      summary: Retrieve OAuth2 token using client credentials.
+      servers:
+      - url: https://auth.stage.tictoc.ai/oauth2
+        description: Test authorisation server
+      - url: https://auth.tictoc.ai/oauth2
+        description: Production authorisation server
+      description: >-
+        Before you can call the XAI Validate endpoints, you need to authenticate via the `/token` API. Successful authentication will return a token that can then be used to authorise your access to functional APIs. You'll need to include this token in the `Authorization` header in your calls.
+          
+        The `/token` API URL includes values in the query path. The URL will look like this:        
+          `https://{host}/oauth2/token?grant_type=client_credentials`
+
+        The `host` value will either be `auth.tictoc.ai` for production or `auth.stage.tictoc.ai` for testing.
+
+        You'll also need to include information in your headers:
+          - `Authorization`: Base64 encoded `client_id` and `client_secret` provided to you by the XAI Validate team as part of onboarding. The format is: `"Basic {client_id}:{client_secret}"`
+          - `Content-Type`: the value is `"application/x-www-form-urlencoded"`
+
+        **Remember, your API credentials must be kept safe and secure. Do not share these or publish to publicly accessible locations such as your client-side code or GitHub.**
+        
+      operationId: getToken
+      security:
+        - tokenAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  example: client_credentials
+              required:
+                - grant_type
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseGetToken'
+        400:
+          description: Invalid client credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseGetToken400'
+        401:
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseGetToken401'
+        403:
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError'
+        422:
+          description: Unable to create token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError'
+  /borrowingamount:
+    post:
+      tags:
+      - Calculator
+      summary: Get the borrowing amount based on personal and financial inputs.
+      description:  >-
+        This endpoint allows you to retrieve the borrowing amount for an up to two applicants based on their high level personal and financial inputs.
+          
+        ### Request
+          
+        The request allows you to the following information to drive an accurate calculation.
+              
+              
+          | Input Type| Purpose |
+          |-----|-----|
+          | `IsCouple` | Boolean indicator as to whether the applicants are in a relationship. You can also specify the value even if you're requesting a calculation for one applicant. |
+          | `Term` | This is the loan term in years for the product for which your customers are applying. |
+          | `Applicants` | This is an object that includes personal and financial inputs for each applicant. Key inputs here are the `Dependants` and the income sources for the applicant. You can specify a main source of income (`INCOME`) or other income sources (`INCOMEOTHER`). |
+          | `Transactions` | This object allows you to specify the application-level financials including expenses (`EXPENSES`), home loan repayments (`HOMELOANREPAYMENTS`) and personal loan repayments (`PERSONALLOANREPAYMENTS`)|
+          | `CreditCardLimits` | This is the sum of credit card limits for all applicants in the application. |
+          | `ConfigurationSetLookup` | This is a reference to your configuration. |
+            
+      
+        **Response**
+          
+        The endpoint response provides you with all the information you need to surface accurate borrowing calculator results in your customer experience.
+          
+        You will receive the following values:
+          
+          - `MaxBorrowingAmount`: the maximum amount that can be borrowed based on your request inputs.
+          - `AnnualCombinedIncome`: the gross annual combined income of all applicants in the request.
+          - `Rate`: the default rate applied in your `ConfigurationSet`.
+        
+        Additionally you will receive summaries of the financial inputs inside the `Transaction` objects for your reference.
+
+        
+      operationId: borrowingAmount
+      parameters:
+        - in: header
+          name: x-api-key
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: The JSON request body for the POST.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestCalculatorBorrowing'
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseCalculatorBorrowing'
+        401:
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError'
+        403:
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError'
+        422:
+          description: Unable to create calculation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError' 
+  
+  /extrarepayments:
+    post:
+      tags:
+      - Calculator
+      summary: Determines how much money can be saved by making extra repayments during the life of a loan.
+      description:  >-
+        This endpoint allows you to retrieve the differences in repayments, and the amount and time saved when making specified extra repayments on a loan.  The calculations take into account the current loan details.
+          
+        **Request**
+          
+        The request requires the following information to perform the calculations and return the response.
+              
+              
+          | Input Type| Purpose |
+          |-----|-----|
+          | `LoanAmount` | The loan amount of the current loan. |
+          | `LoanTerm` | The term of the loan denoted in full years. |
+          | `InterestRate` | The current interest rate of the loan denoted without conversion to a percentage. E.g. 0.0279 reflecting 2.79%.|
+          | `RepaymentFrequency` | The repayment frequency of the loan as an integer to denote Weekly, Fortnightly or Monthly. "WEEK" = Weekly, "FORT" = Fortnightly, "MONTH" = Monthly, "ANNUALLY" = Annually.|
+          | `ExtraRepayment` | The extra repayment in whole dollars to be paid each period from the StartExtraRepayment year.  The extra repayment is assumed to be made every period as denoted by the RepaymentFrequency. |
+          | `StartExtraRepayment` | The year the extra repayments begin. |
+            
+      
+        **Response**
+          
+        The endpoint response provides you with all the required information to display the saving made from making extra repayments and deliver an engaging customer experience.
+          
+        You will receive the following:
+          
+          - `CurrentRepayment`: The repayment based off the inputed loan information per the entered `RepaymentFrequecy`.
+          - `UpdatedRepayment`: The repayment based off the inputed loan information per the entered `RepaymentFrequecy` including the extra repayment.
+          - `TotalPaidCurrent`: The total amount paid determined as the `LoanAmount` + all interest repayments assuming no extra repayments are made.
+          - `TotalPaidUpdated`: The total amount paid detemined as the `LoanAmount` + all interest payments taking into account the `ExtraRepayment` being paid from the `StartExtraRepayment` year.
+          - `InterestSaved`: The difference between `TotalPaidCurrent` and `TotalPaidUpdated`.
+          - `TimeSaved`: The time saved on the loan by making the extra repayments.  Represented as a yearly double and the years and months as integers.
+          - `UpdatedTerm`: The resultant term of the loan taking into account the `ExtraRepayment` being paid from the `StartExtraRepayment` year. Represented as a yearly double and the years and months as integers.
+          - `LoanSchedule`: A list representing the schedule of the loan amounts including the period and year (represented as a double).
+
+      operationId: extraRepayments
+      parameters:
+        - in: header
+          name: x-api-key
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: The JSON request body for the POST.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestCalculatorExtraRepayment'
+        required: true
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseCalculatorExtraRepayment'
+        401:
+          description: Unauthorised.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError'
+        403:
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError'
+        422:
+          description: Unable to create calculation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError' 
+                
+  /saving:
+    post:
+      tags:
+      - Calculator
+      summary: Determines how much money can be saved by making periodic payments into a savings account over a period of time.
+      description:  >-
+        This endpoint allows you to retrieve the amount deposited and the interest generated over time when making periodic payments into a savings account.  The calculations also take into account an initial deposit.
+          
+        **Request**
+          
+        The request requires the following information to perform the calculations and return the response.
+              
+              
+          | Input Type| Purpose |
+          |-----|-----|
+          | `InitialDeposit` | The initial deposit into the saving account. |
+          | `Term` | The term for which periodic payments will be made, denoted in full years. |
+          | `InterestRate` | The current interest rate of the savings denoted without conversion to a percentage. E.g. 0.0279 reflecting 2.79%.|
+          | `PeriodicPayment` | The periodic payment in whole dollars to be paid each period.  The periodic payment is assumed to be made every period as denoted by the PaymentFrequency. |
+          | `PaymentFrequency` | The payment frequency of the loan as an integer to denote Weekly, Fortnightly or Monthly.  "WEEK" = Weekly, "FORT" = Fortnightly, "MONTH" = Monthly.|
+            
+        **Response**
+          
+        The endpoint response provides you with all the required information to display the saving accumulated by making periodic payments and deliver an engaging customer experience.
+          
+        You will receive the following:
+          
+          - `TotalAmountDeposited`: The total amount deposited including the initial deposit and all periodic payments.
+          - `TotalAmountSaved`: The total amount saved including the initial deposit, all periodic payments and the interest accumulated.
+          - `TotalInterest`: The total interest received.
+          - `DepositSchedules`: A list representing the schedule of the `TotalAmountDeposited` and the `TotalAmountSaved` including the period and year (represented as a double).
+
+      operationId: saving
+      parameters:
+        - in: header
+          name: x-api-key
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: The JSON request body for the POST.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SavingCalculatorRequest'        
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SavingCalculatorResponse'
+        401:
+          description: Unauthorised.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError'
+        403:
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError'
+        422:
+          description: Unable to create calculation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError' 
+                
+  /upfrontcosts:
+    post:
+      tags:
+      - Calculator
+      summary: Calculates the cost incurred when purchasing a property. Cost included all duties and LMI premium.
+      description:  >-
+        This endpoint allows you to calculate the upfront cost. Calculation takes duties (stamp, transfer, mortgage) and LMI premium. It also takes concession into account.
+          
+        **Request**
+          
+        The request requires the following information to perform the calculations and return the response.
+              
+              
+          | Input Type| Purpose |
+          |-----|-----|
+          | `PropertyUsage` | The usage of the property.  E.g. "PRI" = Primary Residence, "INV" = Investment. |
+          | `IsFirstHomeBuyer` | Indicates whether this a first home buyer purchase or not. E.g. true indicates this is the first home purchased. |
+          | `State` | The state where the property is located. E.g. "SA" indicates South Australia.|
+          | `PropertyValue` | The value of the property. E.g. 800000. |
+          | `IsNewProperty` | Indicates whether this is a new property or established property. E.g. true indicates this is a new property.|
+          | `SavingAmount` | The saving amount for purchasing the property. E.g. 200000.|
+            
+        **Response**
+          
+        The endpoint response provides you with all the required information to display the all upfront cost by making periodic payments and deliver an engaging customer experience.
+          
+        You will receive the following:
+          
+          - `UpfrontCost`: The total upfront cost including the duties, LMI premium and concessions.
+          - `LmiPremium`: The LMI premium amount for this property purchase.
+          - `DepositValueRatio`: The ratio of the deposit amount.
+          - `Duties`: A list representing the duties such as stamp duty.
+          - `AdditionalDuties`: A list representing the other additional duties such as mortgage and transfer fee.
+          - `Concessions`: A list representing the concessions applicable for this purchase such as First home owner concession, stamp duty exceptions or Territory owned home concession.
+
+      operationId: upfrontcosts
+      parameters:
+        - in: header
+          name: x-api-key
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: The JSON request body for the POST.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpfrontCostCalculatorRequest'        
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpfrontCostCalculatorResponse'
+        401:
+          description: Unauthorised.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError'
+        403:
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError'
+        422:
+          description: Unable to create calculation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseRequestError' 
+components:
+  schemas:
+    ResponseGetToken:
+      required:
+      - access_token
+      - expires_in
+      - token_type
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: Access token linked to Client Id containing user permissions.
+        expires_in:
+          type: number
+          description: Seconds until the token expires.
+        token_type:
+          type: string
+          description: Always "Bearer", with current default of 60 minutes (3,600
+            seconds).
+          enum:
+          - Bearer
+    ResponseGetToken400:
+      required:
+      - error
+      type: object
+      properties:
+        error:
+          type: string
+          description: Description of the error.
+          enum:
+          - invalid client
+    ResponseGetToken401:
+      required:
+      - error
+      type: object
+      properties:
+        error:
+          type: string
+          description: Description of the error.
+          enum:
+          - unauthorised
+    RequestCalculatorBorrowing:
+      required:
+      - IsCouple
+      - Applicants
+      - Transactions
+      - CreditCardLimits
+      - Term
+      - ConfigurationSetLookup
+      - Locale
+      - Date
+      - ApplicatiApplicantsonCreatedFromDate
+      type: object
+      properties:
+        IsCouple:
+          type: boolean
+          description: A boolean value to indicate if the calculation is for a couple or a single person.
+        Applicants:
+          $ref: '#/components/schemas/RequestResponseCalculatorBorrowingApplicant'
+          
+        Transactions:
+          $ref: '#/components/schemas/RequestResponseCalculatorBorrowingApplication'
+        CreditCardLimits:
+          type: number
+          example: 10000.00
+        Locale:
+          type: string
+          example: 'Australia'
+          default: 'Australia'
+        Date:
+          type: string
+          format: date-time
+          description: The date of the calculation request.
+        Term:
+          type: integer
+          example: 30
+          description: The loan term for the calculation (in whole years).
+        ConfigurationSetLookup:
+          type: object
+          description: Configuration reference to drive lender specific config.
+          required:
+            - Merchant
+            - Lender
+          properties:
+            Merchant:
+              type: string
+              description: The client code assigned to your organisation.
+              example: AHL
+            Lender:
+              type: string
+              description: The lender code assigned to your organisation.
+              example: BEN
+    ResponseCalculatorBorrowing:
+      required:
+      - RequestId
+      - MaxBorrowingAmount
+      - Rate
+      - AnnualCombinedIncome
+      - Applicants
+      - Transactions
+      type: object
+      properties:
+        RequestId:
+          type: string
+          description: Unique identifier for your request.
+          format: uuid
+        MaxBorrowingAmount:
+          type: number
+          format: double
+          example: 623555.44
+          description: The maximum amount your applicants can borrow based on the input values.
+        Rate:
+          type: number
+          format: double
+          example: 0.0319
+          description: The default product rate based on your configuration.
+        AnnualCombinedIncome:
+          type: number
+          format: double
+          example: 120025.33
+          description: The gross annual combined income of all applicants in the request.
+        Applicants:
+          $ref: '#/components/schemas/RequestResponseCalculatorBorrowingApplicant'
+        Transactions:
+          $ref: '#/components/schemas/RequestResponseCalculatorBorrowingApplication'
+    RequestResponseCalculatorBorrowingApplication:
+      type: array
+      description: Specific financial information for the application used to drive the calculation.
+      items:
+        type: object
+        required:
+          - Type
+          - Amount
+          - Frequency
+        properties:
+          Type:
+            type: string
+            description: The financial type for the applicant to be used in the calculation.
+            enum:
+              - INCOME
+              - EXPENSES
+              - HOMELOANREPAYMENTS
+              - PERSONALLOANREPAYMENTS
+              - DEBTREPAYMENTS
+          Amount:
+            type: number
+            example: 2000.00
+            description: The amount of the financial input.
+          Frequency:
+            type: string
+            description: The frequency of the financial input.
+            enum:
+              - M
+            default: M
+    RequestResponseCalculatorBorrowingApplicant:
+        type: array
+        description: List containing `Applicant` objects to be used for the calculation.
+        items:
+          type: object
+          required:
+            - Type
+            - Dependants
+            - Locale
+            - Transactions
+          properties:
+            Type:
+              type: string
+              enum:
+                - PA
+                - SA
+              description: An indicator as to whether the applicant is primary (`PA`) or secondary applicant (`SA`).
+            Dependants:
+              type: integer
+              example: 2
+              description: An integer representing the number of dependants for the applicant.
+            Locale:
+              type: string
+              example: 'Australia'
+              default: 'Australia'
+            Transactions:
+              type: array
+              description: Specific financial information for the applicant used to drive the calculation.
+              items:
+                type: object
+                required:
+                  - Type
+                  - Amount
+                  - Frequency
+                properties:
+                  Type:
+                    type: string
+                    description: The financial type for the applicant to be used in the calculation.
+                    enum:
+                      - INCOME
+                      - INCOMEOTHER
+                  Amount:
+                    type: number
+                    example: 50000.00
+                    description: The amount of the financial input.
+                  Frequency:
+                    type: string
+                    description: The frequency of the financial input.
+                    enum:
+                      - A
+                      - M
+                      - F
+                      - W   
+    RequestCalculatorExtraRepayment:
+      required:
+      - LoanAmount
+      - LoanTerm
+      - InterestRate
+      - RepaymentFrequency
+      - ExtraRepayment
+      type: object
+      properties:
+        LoanAmount:
+          type: number
+          description: The loan amount on which the calculations are based.
+          example: 834000
+        LoanTerm:
+          type: integer
+          description: The loan term in whole years.
+          example: 30
+        InterestRate:
+          type: number
+          description: The interest rate that is applied to the loan represented denoted in form X.XX. 
+          example: 0.039
+        RepaymentFrequency:
+          required:
+            - Code
+          type: object
+          properties:
+            Code:
+              description: The repayment frequency of associated with the loan as an integer. "WEEK" = Weekly, "FORT" = Fortnightly, "MONTH" = Monthly, "ANNUALLY" = Annually.
+              type: string
+              enum:
+              - WEEK
+              - FORT
+              - MONTH
+              - ANNUALLY
+        ExtraRepayment:
+          required:
+            - ExtraRepaymentAmount
+            - StartExtraRepayment
+          type: object
+          properties:
+            ExtraRepaymentAmount:
+              description: The amount of the extra repayment per period. The period is defined by the repayment frequency.
+              type: number
+              example: 125.12
+            StartExtraRepayment:
+              type: integer
+              description: The year in which the extra repayments begin.
+              example: 8
+    ResponseCalculatorExtraRepayment:
+      required:
+      - RequestId
+      - CurrentRepayment
+      - UpdatedRepayment
+      - TotalPaidCurrent
+      - TotalPaidUpdated
+      - InterestSaved
+      - TimeSaved
+      - UpdatedTerm
+      - RepaymentDetail
+      type: object
+      properties:
+        RequestId:
+          type: string
+          description: Unique identifier for your request.
+          format: uuid
+        CurrentRepayment:
+          type: number
+          description: The repayment amount relating to the frequent entered excluding any extra repayments.
+          example: 1756.23
+        UpdatedRepayment:
+          type: number
+          description: The repayment amount relating to the frequent entered including any extra repayments.
+          example: 1975.71
+        TotalPaidCurrent:
+          type: number
+          description: The total amount paid over the life of loan including both the loan amount and interest incurred, not taking into account the extra repayments.
+          example: 1212846.99
+        TotalPaidUpdated:
+          type: number
+          description: The total amount paid over the life of loan including both the loan amount and interest incurred, taking into account the extra repayments.
+          example: 1104689.48
+        InterestSaved:
+          type: number
+          description: The difference between the TotalPaidCurrent and the TotalPaidUpdated.
+          example: 108157.51
+        TimeSaved:
+          type: object
+          description: The time saved off the term of the loan by making the extra repayments.
+          required:
+            - Total
+            - Years
+            - Months
+          properties:
+            Total:
+              type: number
+              description: The total number of years and months represented as a double.
+              example: 25.25 
+            Years:
+              type: integer
+              description: The number of years represented as an integer.
+              example: 25
+            Months:
+              type: integer
+              description: The number of months represented as an integer.
+              example: 3
+        UpdatedTerm:
+          type: object
+          description: The expected term of the loan by making the extra repayments.
+          required:
+            - Total
+            - Years
+            - Months
+          properties:
+            Total:
+              type: number
+              description: The total number of years and months represented as a double.
+              example: 4.75 
+            Years:
+              type: integer
+              description: The number of years represented as an integer.
+              example: 4
+            Months:
+              type: integer
+              description: The number of months represented as an integer.
+              example: 9
+        RepaymentDetail:
+          type: array
+          description: The loan schedule of both the Current and Updated repayment profiles.
+          items:
+            type: object
+            required:
+              - Period
+              - Year
+              - CurrentLoanAmount
+              - UpdatedLoanAmount
+            properties:
+              Period:
+                type: integer
+                description: The period (week, fortnight or month) that the loan amounts relate to represented as an integer.
+                example: 267 
+              Year:
+                type: number
+                description: The total number of years and months represented as a double.
+                example: 22.25
+              CurrentLoanAmount:
+                type: number
+                description: The loan amount relating to the period excluding the extra repayments.
+                example: 568149.57
+              UpdatedLoanAmount:
+                type: number
+                description: The loan amount relating to the period including the extra repayments.
+                example: 293555.34
+    SavingCalculatorRequest:
+      required:      
+      - Term
+      - PaymentFrequency
+      type: object
+      properties:
+        InitialDeposit:
+          type: number
+          description: The initial deposit into the saving account. When not specified in the request default value of 0 will be used.
+          example: 2650
+        Term:
+          type: integer
+          description: The term in whole years.
+          example: 5
+        InterestRate:
+          type: number
+          description: The interest rate that is applied to the savings represented denoted in form X.XX.  When not specified in the request default value of 0 will be used.
+          example: 0.0275
+        PeriodicPayment:
+          type: number
+          description: The amount of each periodic payment. The period is defined by the payment frequency. When not specified in the request default value of 0 will be used.
+          example: 250
+        PaymentFrequency:
+          type: string
+          description: The payment frequency of associated with the periodic payments as an integer. "WEEK" = Weekly, "FORT" = Fortnightly, "MONTH" = Monthly.
+          example: "FORT"
+    SavingCalculatorResponse:
+      required:
+      - RequestId
+      - TotalAmountDeposited
+      - TotalAmountSaved
+      - TotalInterest
+      - Schedule
+      type: object
+      properties:
+        RequestId:
+          type: string
+          description: Unique identifier for your request.
+          format: uuid
+        TotalAmountDeposited:
+          type: number
+          description: The total amount deposited including the initial deposit and all periodic payments.
+          example: 70490.00
+        TotalAmountSaved:
+          type: number
+          description: The total amount saved including the initial deposit, all periodic payments and the interest accumulated.
+          example: 78224.77
+        TotalInterest:
+          type: number
+          description: The total interest received.  Calculated as TotalAmountSaved - TotalAmountDeposited.
+          example: 7734.77
+        DepositSchedules:
+          type: array
+          description: The schedule of both the total amount deposited and the total amount saved.
+          items:
+            type: object
+            required:
+              - Period
+              - Year
+              - AmountDeposited
+              - AmountSaved
+            properties:
+              Period:
+                type: integer
+                description: The period (week, fortnight or month) that the loan amounts relate to represented as an integer.
+                example: 18 
+              Year:
+                type: number
+                description: The total number of years and months represented as a double.
+                example: 1.5
+              AmountDeposited:
+                type: number
+                description: The amount deposited (initial deposit and periodic payments) relating to the period.
+                example: 9250.00
+              AmountSaved:
+                type: number
+                description: The amount saved relating to the period.
+                example: 9566.13
+    UpfrontCostCalculatorRequest:
+      required:      
+      - PropertyUsage
+      - State
+      - PropertyValue
+      - SavingAmount
+      type: object
+      properties:
+        PropertyUsage:
+          type: string
+          description: The usage of this property. Indicates whether this is for the primary residence or for an investment. "PRI" for primary residence and "INV" for investment.
+          example: "PRI"
+        State:
+          type: string
+          description: The state whether the property is located. "SA" = South Australia, "NSW" = New South Wales.
+          example: "NT"
+        PropertyValue:
+          type: number
+          description: The value of the purchasing property.
+          example: 800000
+        SavingAmount:
+          type: number
+          description: The saving/deposit amount for purchasing the propery.
+          example: 200000
+        IsFirstHomeBuyer:
+          type: boolean
+          description: The flag to indicates whether this is a first home buyer purchase. When not specified the default value will be false.
+          example: true
+        IsNewProperty:
+          type: boolean
+          description: The flag to indicates whether this is a new property or an established property. When not specified the default value will be false.
+          example: true
+    UpfrontCostCalculatorResponse:
+      required:
+      - RequestId
+      - UpfrontCost
+      - LmiPremium
+      - DepositValueRatio
+      - Duties
+      - AdditionalDuties
+      - Concessions
+      type: object
+      properties:
+        RequestId:
+          type: string
+          description: Unique identifier for your request.
+          format: uuid
+        UpfrontCost:
+          type: number
+          description: The total amount of all upfront costs.
+          example: 658537.90
+        LmiPremium:
+          type: number
+          description: The calculated amount for the LMI premium.
+          example: 25022.25
+        DepositValueRatio:
+          type: number
+          description: The ratio of the deposit/saving amount.
+          example: 12.45
+        Duties:
+          type: array
+          description: The list of all the applicable duties such as stamp duty.
+          items:
+            type: object
+            required:
+              - Name
+              - Description
+              - Duty
+              - Reference
+            properties:
+              Name:
+                type: string
+                description: The name of the duty.
+                example: Transfer duty (stamp duty) 
+              Description:
+                type: string
+                description: The description of the duty.
+                example: A State Government tax based on the purchase price of the property.
+              Duty:
+                type: number
+                description: The duty amount calculated.
+                example: 25602.23
+              Reference:
+                type: string
+                description: The reference URL to the state government site which describes the information about the duty.
+                example: https://www.wa.gov.au/organisation/department-of-finance/transfer-duty-assessment
+        AdditionalDuties:
+          type: array
+          description: The list of all the applicable additional duties such as land transfer fee and mortgage fee.
+          items:
+            type: object
+            required:
+              - Name
+              - Description
+              - Duty
+              - Reference
+            properties:
+              Name:
+                type: string
+                description: The name of the duty.
+                example: Mortgage registration fee 
+              Description:
+                type: string
+                description: The description of the duty.
+                example: A State Government fee to officially register a lenders’ mortgage on your property.
+              Duty:
+                type: number
+                description: The duty amount calculated.
+                example: 149.00
+              Reference:
+                type: string
+                description: The reference URL to the state government site which describes the information about the duty.
+                example: https://www0.landgate.wa.gov.au/titles-and-surveys/forms-and-fees/Lodgement-and-search-forms
+        Concessions:
+          type: array
+          description: The list of all concessions applicable.
+          items:
+            type: object
+            required:
+              - Name
+              - Description
+              - Duty
+              - Reference
+            properties:
+              Name:
+                type: string
+                description: The name of the duty.
+                example: First home buyer duty concession 
+              Description:
+                type: string
+                description: The description of the duty.
+                example: A state government concession for a reduced rate of transfer (stamp) duty based on your property value.
+              Duty:
+                type: number
+                description: The duty amount calculated.
+                example: 18601
+              Reference:
+                type: string
+                description: The reference URL to the state government site which describes the information about the duty.
+                example: https://www.wa.gov.au/government/publications/first-home-owner-duty-fs
+    ResponseRequestError:
+      required:
+      - Errors
+      - HasErrors
+      - RequestId
+      type: object
+      properties:
+        Errors:
+          type: array
+          description: Description of error(s).
+          items:
+            type: object
+            properties:
+              ErrorCode:
+                type: string
+                description: The error type code.
+                enum:
+                  - ERR001
+              ErrorType:
+                type: string
+                description: The error type.
+                enum:
+                  - Generic
+              Code:
+                type: string
+                description: The message type code.
+                enum:
+                  - Error
+              Message:
+                type: string
+                description: The error message.
+        HasErrors:
+          type: boolean
+          description: Boolean indicator as to whether the response indicates errors.
+        RequestId:
+          type: string
+          description: 'Unique identifier for the request that generated the error.     '
+          format: uuid
+  securitySchemes:
+    tokenAuth:
+      type: http
+      scheme: basic
+    apiAuth: 
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+security:
+- apiAuth: []
+- apiKeyAuth: []
