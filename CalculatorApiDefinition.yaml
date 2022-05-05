@@ -514,7 +514,7 @@ components:
         RequestId:
           type: string
           description: Unique identifier for your request.
-          format: uuid
+          example: RojLCjD-ywPPMNg=
         MaxBorrowingAmount:
           type: number
           format: double
@@ -680,7 +680,7 @@ components:
         RequestId:
           type: string
           description: Unique identifier for your request.
-          format: uuid
+          example: RojLCjD-ywPPMNg=
         CurrentRepayment:
           type: number
           description: The repayment amount relating to the frequent entered excluding any extra repayments.
@@ -806,7 +806,7 @@ components:
         RequestId:
           type: string
           description: Unique identifier for your request.
-          format: uuid
+          example: RojLCjD-ywPPMNg=
         TotalAmountDeposited:
           type: number
           description: The total amount deposited including the initial deposit and all periodic payments.
@@ -892,7 +892,7 @@ components:
         RequestId:
           type: string
           description: Unique identifier for your request.
-          format: uuid
+          example: RojLCjD-ywPPMNg=
         UpfrontCost:
           type: number
           description: The total amount of all upfront costs.
@@ -1023,7 +1023,7 @@ components:
         RequestId:
           type: string
           description: 'Unique identifier for the request that generated the error.     '
-          format: uuid
+          example: RojLCjD-ywPPMNg=
   securitySchemes:
     tokenAuth:
       type: http
