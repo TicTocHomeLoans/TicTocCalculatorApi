@@ -126,6 +126,7 @@ paths:
           |-----|-----|
           | `IsCouple` | Boolean indicator as to whether the applicants are in a relationship. You can also specify the value even if you're requesting a calculation for one applicant. |
           | `Term` | This is the loan term in years for the product for which your customers are applying. |
+          | `PropertyUsage` | Describes how the applicant will use the property, as the principle place of residence or an investment property. |
           | `Applicants` | This is an object that includes personal and financial inputs for each applicant. Key inputs here are the `Dependants` and the income sources for the applicant. You can specify a main source of income (`INCOME`) or other income sources (`INCOMEOTHER`). |
           | `Transactions` | This object allows you to specify the application-level financials including expenses (`EXPENSES`), home loan repayments (`HOMELOANREPAYMENTS`) and personal loan repayments (`PERSONALLOANREPAYMENTS`)|
           | `CreditCardLimits` | This is the sum of credit card limits for all applicants in the application. |
@@ -486,6 +487,12 @@ components:
           type: integer
           example: 30
           description: The loan term for the calculation (in whole years).
+        PropertyUsage:
+          type: string
+          description: Describes how the applicant will use the property, as the principle place of residence or an investment property.
+          enum:
+            - PRI
+            - INV
         ConfigurationSetLookup:
           type: object
           description: Configuration reference to drive lender specific config.
