@@ -126,6 +126,7 @@ paths:
           |-----|-----|
           | `IsCouple` | Boolean indicator as to whether the applicants are in a relationship. You can also specify the value even if you're requesting a calculation for one applicant. |
           | `Term` | This is the loan term in years for the product for which your customers are applying. |
+          | `InterestRate` | This is the interest rate of the product for which your customers are applying. If not provided, we will use the currently offered rate for this properties usage. |
           | `PropertyUsage` | Describes how the applicant will use the property, as the principle place of residence or an investment property. |
           | `Applicants` | This is an object that includes personal and financial inputs for each applicant. Key inputs here are the `Dependants` and the income sources for the applicant. You can specify a main source of income (`INCOME`) or other income sources (`INCOMEOTHER`). |
           | `Transactions` | This object allows you to specify the application-level financials including expenses (`EXPENSES`), home loan repayments (`HOMELOANREPAYMENTS`) and personal loan repayments (`PERSONALLOANREPAYMENTS`)|
@@ -141,7 +142,7 @@ paths:
           
           - `MaxBorrowingAmount`: the maximum amount that can be borrowed based on your request inputs.
           - `AnnualCombinedIncome`: the gross annual combined income of all applicants in the request.
-          - `Rate`: the default rate applied in your `ConfigurationSet`.
+          - `Rate`: the buffered interest rate for the new property used in the calculation.
         
         Additionally you will receive summaries of the financial inputs inside the `Transaction` objects for your reference.
 
@@ -487,6 +488,10 @@ components:
           type: integer
           example: 30
           description: The loan term for the calculation (in whole years).
+        InterestRate:
+          type: decimal
+          example: 0.055
+          description: An optional interest rate for the calculation. If not provided, we will use the currently offered rate for the properties usage.
         PropertyUsage:
           type: string
           description: Describes how the applicant will use the property, as the principle place of residence or an investment property.
