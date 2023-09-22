@@ -460,9 +460,6 @@ components:
       - CreditCardLimits
       - Term
       - ConfigurationSetLookup
-      - Locale
-      - Date
-      - ApplicatiApplicantsonCreatedFromDate
       type: object
       properties:
         IsCouple:
@@ -508,7 +505,7 @@ components:
             Merchant:
               type: string
               description: The client code assigned to your organisation.
-              example: AHL
+              example: AAA
             Lender:
               type: string
               description: The lender code assigned to your organisation.
