@@ -489,9 +489,9 @@ components:
           example: 30
           description: The loan term for the calculation (in whole years).
         InterestRate:
-          type: decimal
+          type: number
           example: 0.055
-          description: An optional interest rate for the calculation. If not provided, we will use the currently offered rate for the properties usage.
+          description: An optional interest rate for the calculation. If not provided, we will use the currently offered rate for the properties usage. This is the customer interest rate without any regulated buffers (these will be applied during the calculation).
         PropertyUsage:
           type: string
           description: Describes how the applicant will use the property, as the principle place of residence or an investment property.
@@ -535,8 +535,8 @@ components:
         Rate:
           type: number
           format: double
-          example: 0.0319
-          description: The default product rate based on your configuration.
+          example: 0.08
+          description: The interest rate used in the calculation. This will be the configured default or the `InterestRate` provided in the request plus any configured buffer.
         AnnualCombinedIncome:
           type: number
           format: double
